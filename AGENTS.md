@@ -46,6 +46,17 @@ playwright.config.ts
 2. Call it from `apps/web` via `orpc.<name>(...)` (imported from `src/lib/orpc.ts`) — it will be fully typed with no further wiring.
 3. Extend `e2e/home.spec.ts` or add a new spec under `e2e/` if the change is user-facing.
 
+## Supabase
+
+This app is wired to the `fantasy-football` Supabase project (id `arpawvszlvhynkepusia`, org `gurleen-dev`), server-side only:
+
+- `apps/server/src/lib/supabase.ts` creates the client with `createClient<Database>(...)` from `@supabase/supabase-js`, reading `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the environment (Bun loads `.env` automatically — no `dotenv` dependency needed). It throws at import time if either is missing.
+- `apps/server/src/lib/database.types.ts` holds the generated `Database` type (and the `Tables<>`/`TablesInsert<>`/`TablesUpdate<>`/`Enums<>` helpers), passed into `createClient` for fully-typed query results.
+- `apps/server/.env.example` documents the two env vars. Copy it to `apps/server/.env` (gitignored) to run locally. The URL and anon key committed there are not secrets — the anon key is meant to be exposed and is safe by design, gated by Row Level Security policies rather than secrecy. Never put the `service_role` key in this file or anywhere committed.
+- The project currently has **no tables** — `database.types.ts` reflects an empty schema. `apps/web` never talks to Supabase directly (see the oRPC section above); once tables exist, add oRPC procedures in `apps/server/src/router.ts` that use `supabase` internally, the same way you'd add any other procedure.
+
+**Regenerating types after a schema change:** use the Supabase MCP tool `generate_typescript_types` (project id `arpawvszlvhynkepusia`) and overwrite `apps/server/src/lib/database.types.ts` with the result, then run `bun run lint:fix` (Biome's formatting differs from the raw generator output — semicolons, line wrapping). Without MCP access, the equivalent is the Supabase CLI: `supabase gen types typescript --project-id arpawvszlvhynkepusia > apps/server/src/lib/database.types.ts`.
+
 ## The `@gurleen-ui` submodule — read this before touching `vendor/`
 
 `vendor/gurleen-ui` is a **git submodule** pointing at `github.com/gurleen/ui`, pinned to a specific commit (recorded in this repo's git tree, not floating).

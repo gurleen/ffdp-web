@@ -12,6 +12,7 @@ A copy-and-rename template for new React apps: **Bun** runtime, **Vite** + **Rea
 | Frontend | [Vite](https://vite.dev) + React 19 |
 | Styling | [Tailwind CSS v4](https://tailwindcss.com) |
 | Client↔server | [oRPC](https://orpc.dev) |
+| Database | [Supabase](https://supabase.com) (`apps/server` only) |
 | Components | [`@gurleen-ui`](https://github.com/gurleen/ui) (vendored as a git submodule) |
 | Lint/format | [Biome](https://biomejs.dev) |
 | E2E tests | [Playwright](https://playwright.dev) |
@@ -26,6 +27,8 @@ git submodule update --init --recursive
 
 bun install                                    # also builds the @gurleen-ui packages (postinstall)
 bunx playwright install --with-deps chromium     # one-time, only needed for `bun run test:e2e`
+
+cp apps/server/.env.example apps/server/.env      # Supabase project URL + anon key
 
 bun run dev                                       # web: http://localhost:5173, server: http://localhost:3001
 ```
@@ -57,6 +60,10 @@ This repo is meant to be copied for each new app, not extended in place:
 - In dev, `apps/web/vite.config.ts` proxies `/rpc` to the server so there's no CORS to configure.
 
 **To add a procedure:** add it to `router` in `apps/server/src/router.ts`, then call `orpc.<name>(...)` from `apps/web` — it's typed automatically.
+
+## Supabase
+
+`apps/server` talks to the `fantasy-football` Supabase project via `apps/server/src/lib/supabase.ts`, typed with `apps/server/src/lib/database.types.ts`. `apps/web` never talks to Supabase directly — it goes through oRPC, same as everything else. See `AGENTS.md`'s Supabase section for env vars and how to regenerate types after a schema change.
 
 ## `@gurleen-ui`: why a submodule
 

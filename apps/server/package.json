@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@orpc/server": "^1.14.14",
+    "@supabase/supabase-js": "^2.112.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
