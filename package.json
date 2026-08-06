@@ -1,0 +1,28 @@
+{
+  "name": "app-starter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "React + Bun + Tailwind CSS + oRPC app template, with @gurleen-ui as a git submodule.",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "vendor/gurleen-ui/packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter './apps/*' dev",
+    "build": "bun run --filter './apps/*' build",
+    "typecheck": "bun run --filter './apps/*' typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "postinstall": "bun run build:ui",
+    "build:ui": "bun run --cwd vendor/gurleen-ui/packages/tokens --if-present build && bun run --cwd vendor/gurleen-ui/packages/core build && bun run --cwd vendor/gurleen-ui/packages/broadcast build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.7",
+    "@playwright/test": "^1.62.1",
+    "typescript": "^7.0.2"
+  }
+}
