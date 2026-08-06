@@ -50,12 +50,20 @@ playwright.config.ts
 
 This app is wired to the `fantasy-football` Supabase project (id `arpawvszlvhynkepusia`, org `gurleen-dev`), server-side only:
 
-- `apps/server/src/lib/supabase.ts` creates the client with `createClient<Database>(...)` from `@supabase/supabase-js`, reading `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the environment (Bun loads `.env` automatically — no `dotenv` dependency needed). It throws at import time if either is missing.
+- `apps/server/src/lib/supabase.ts` creates the client with `createClient<Database, "core">(url, key, { db: { schema: "core" } })` from `@supabase/supabase-js`, reading `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the environment (Bun loads `.env` automatically — no `dotenv` dependency needed). It throws at import time if either is missing.
 - `apps/server/src/lib/database.types.ts` holds the generated `Database` type (and the `Tables<>`/`TablesInsert<>`/`TablesUpdate<>`/`Enums<>` helpers), passed into `createClient` for fully-typed query results.
 - `apps/server/.env.example` documents the two env vars. Copy it to `apps/server/.env` (gitignored) to run locally. The URL and anon key committed there are not secrets — the anon key is meant to be exposed and is safe by design, gated by Row Level Security policies rather than secrecy. Never put the `service_role` key in this file or anywhere committed.
-- The project currently has **no tables** — `database.types.ts` reflects an empty schema. `apps/web` never talks to Supabase directly (see the oRPC section above); once tables exist, add oRPC procedures in `apps/server/src/router.ts` that use `supabase` internally, the same way you'd add any other procedure.
+- `apps/web` never talks to Supabase directly (see the oRPC section above); add oRPC procedures in `apps/server/src/router.ts` that use `supabase` internally, the same way you'd add any other procedure.
 
-**Regenerating types after a schema change:** use the Supabase MCP tool `generate_typescript_types` (project id `arpawvszlvhynkepusia`) and overwrite `apps/server/src/lib/database.types.ts` with the result, then run `bun run lint:fix` (Biome's formatting differs from the raw generator output — semicolons, line wrapping). Without MCP access, the equivalent is the Supabase CLI: `supabase gen types typescript --project-id arpawvszlvhynkepusia > apps/server/src/lib/database.types.ts`.
+**All tables live in the `core` schema, not `public`** (`league`, `league_season`, `manager`, `franchise`, `player`, `matchup`, `lineup_slot_entry`, `roster_membership`, `transaction`, `transaction_item`, `draft`, `draft_pick`, `nfl_team`, `nfl_game`, `player_week_stats`, plus join tables — 17 tables total, RLS enabled on all). `public` is and stays empty.
+
+**Important gotcha:** `core` is not yet in this project's exposed-schemas list (Dashboard → Project Settings → Data API → Exposed schemas — currently just `public`). Two things depend on that setting and will silently misbehave without it:
+1. The Supabase MCP `generate_typescript_types` tool and PostgREST both only see exposed schemas, so the generator emits an empty `public` and omits `core` entirely — it will look like the DB has no tables until this is fixed.
+2. Runtime queries through `supabase-js` go through PostgREST and get rejected (schema not exposed) even though `apps/server/src/lib/supabase.ts` is correctly configured to target `core` — this is independent of and in addition to RLS.
+
+Until `core` is added to that list, `database.types.ts`'s `core` schema was **hand-authored** from `list_tables({ schemas: ["core"], verbose: true })` introspection output (see the file's header comment) — treat it as best-effort, not generator-verified.
+
+**Regenerating types after a schema change (once `core` is exposed):** use the Supabase MCP tool `generate_typescript_types` (project id `arpawvszlvhynkepusia`) and overwrite `apps/server/src/lib/database.types.ts` with the result, then run `bun run lint:fix` (Biome's formatting differs from the raw generator output — semicolons, line wrapping). Without MCP access, the equivalent is the Supabase CLI: `supabase gen types typescript --project-id arpawvszlvhynkepusia --schema core > apps/server/src/lib/database.types.ts`.
 
 ## The `@gurleen-ui` submodule — read this before touching `vendor/`
 

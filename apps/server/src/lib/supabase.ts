@@ -10,4 +10,10 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+// All tables live in `core`, not `public` — see the note atop database.types.ts.
+// `core` must be added to Project Settings -> Data API -> Exposed schemas
+// before queries through this client will succeed (PostgREST rejects
+// non-exposed schemas at request time, independent of RLS).
+export const supabase = createClient<Database, "core">(supabaseUrl, supabaseKey, {
+  db: { schema: "core" },
+});

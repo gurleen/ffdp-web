@@ -63,7 +63,7 @@ This repo is meant to be copied for each new app, not extended in place:
 
 ## Supabase
 
-`apps/server` talks to the `fantasy-football` Supabase project via `apps/server/src/lib/supabase.ts`, typed with `apps/server/src/lib/database.types.ts`. `apps/web` never talks to Supabase directly — it goes through oRPC, same as everything else. See `AGENTS.md`'s Supabase section for env vars and how to regenerate types after a schema change.
+`apps/server` talks to the `fantasy-football` Supabase project via `apps/server/src/lib/supabase.ts`, typed with `apps/server/src/lib/database.types.ts`. `apps/web` never talks to Supabase directly — it goes through oRPC, same as everything else. All tables live in the `core` schema, not `public` — see `AGENTS.md`'s Supabase section for env vars, the `core` exposed-schemas gotcha, and how to regenerate types after a schema change.
 
 ## `@gurleen-ui`: why a submodule
 
