@@ -4,7 +4,7 @@ Orientation for a coding agent picking up this repo cold. Read this before touch
 
 ## What this repo is
 
-**A copy-and-rename template, not a product.** `app-starter` exists to be forked/copied into a new repo whenever a new app is started. It is not itself an app with a fixed feature set — the demo page and example oRPC procedure are placeholders meant to be replaced. See "Using this as a template" below if that's the task at hand.
+**`ffdp-web` is a personal fantasy football tracking app** — league history, franchise records, weekly matchups, rosters, drafts, transactions, and player stats, pulled from ESPN/Sleeper into the `fantasy-football` Supabase project (see the Supabase section below) and served through this app. It started life from a private starter template, which is why some of the plumbing below (the oRPC wiring, `@gurleen-ui`, Bun/Vite setup) reads generically — that infrastructure is intentional and still applies, it's just not template boilerplate anymore. This is the real app, not something to copy elsewhere.
 
 ## Stack, and why
 
@@ -46,6 +46,23 @@ playwright.config.ts
 2. Call it from `apps/web` via `orpc.<name>(...)` (imported from `src/lib/orpc.ts`) — it will be fully typed with no further wiring.
 3. Extend `e2e/home.spec.ts` or add a new spec under `e2e/` if the change is user-facing.
 
+## Supabase
+
+This app is wired to the `fantasy-football` Supabase project (id `arpawvszlvhynkepusia`, org `gurleen-dev`), server-side only:
+
+- `apps/server/src/lib/supabase.ts` creates the client with `createClient<Database, "core">(url, key, { db: { schema: "core" } })` from `@supabase/supabase-js`, reading `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the environment (Bun loads `.env` automatically — no `dotenv` dependency needed). It throws at import time if either is missing.
+- `apps/server/src/lib/database.types.ts` holds the generated `Database` type (and the `Tables<>`/`TablesInsert<>`/`TablesUpdate<>`/`Enums<>` helpers), passed into `createClient` for fully-typed query results.
+- `apps/server/.env.example` documents the two env vars. Copy it to `apps/server/.env` (gitignored) to run locally. The URL and anon key committed there are not secrets — the anon key is meant to be exposed and is safe by design, gated by Row Level Security policies rather than secrecy. Never put the `service_role` key in this file or anywhere committed.
+- `apps/web` never talks to Supabase directly (see the oRPC section above); add oRPC procedures in `apps/server/src/router.ts` that use `supabase` internally, the same way you'd add any other procedure.
+
+**All tables live in the `core` schema, not `public`** (`league`, `league_season`, `manager`, `franchise`, `player`, `matchup`, `lineup_slot_entry`, `roster_membership`, `transaction`, `transaction_item`, `draft`, `draft_pick`, `nfl_team`, `nfl_game`, `player_week_stats`, plus join tables — 17 tables total, RLS enabled on all). `public` is and stays empty.
+
+`core` is in this project's exposed-schemas list (Dashboard → Project Settings → Data API → Exposed schemas), confirmed working — `supabase-js` queries against `core` succeed through PostgREST.
+
+**Standing gotcha (tool limitation, not a project setting):** the Supabase MCP `generate_typescript_types` tool always emits only `public`, regardless of the project's exposed-schemas config — its underlying Management API endpoint (`GET /v1/projects/{ref}/types/typescript`) takes an optional `included_schemas` query param, but this MCP tool doesn't expose that parameter, so there's no way to ask it for `core` through MCP. `database.types.ts`'s `core` schema is therefore **hand-authored** from `list_tables({ schemas: ["core"], verbose: true })` introspection output (see the file's header comment) — treat it as best-effort, not generator-verified, and re-derive it by hand from `list_tables` after any schema change made through MCP.
+
+**Regenerating types via the Supabase CLI instead (covers `core` properly, if CLI access is available):** `supabase gen types typescript --project-id arpawvszlvhynkepusia --schema core > apps/server/src/lib/database.types.ts`, then `bun run lint:fix` (Biome's formatting differs from the raw generator output — semicolons, line wrapping). Prefer the CLI's output over a hand-authored file whenever it's available.
+
 ## The `@gurleen-ui` submodule — read this before touching `vendor/`
 
 `vendor/gurleen-ui` is a **git submodule** pointing at `github.com/gurleen/ui`, pinned to a specific commit (recorded in this repo's git tree, not floating).
@@ -69,7 +86,7 @@ git commit -m "chore: bump @gurleen-ui submodule"
 bun install                 # re-links + rebuilds against the new commit
 ```
 
-**Using `@gurleen-ui/broadcast`:** not wired into `apps/web` by default (it's TV-control-room-specific: tally lamps, timecode, transport controls — out of scope for a generic app template). To use it: add `"@gurleen-ui/broadcast": "workspace:*"` to `apps/web/package.json`, `bun install`. It's already built by `postinstall`.
+**Using `@gurleen-ui/broadcast`:** not wired into `apps/web` by default (it's TV-control-room-specific: tally lamps, timecode, transport controls — out of scope for this app). To use it: add `"@gurleen-ui/broadcast": "workspace:*"` to `apps/web/package.json`, `bun install`. It's already built by `postinstall`.
 
 **Before using or modifying any `@gurleen-ui` component**, read `vendor/gurleen-ui/CLAUDE.md` (package boundaries, component conventions) and the specific component's `<Name>.md` doc next to its source in `vendor/gurleen-ui/packages/{core,broadcast}/src/components/` — don't infer usage from the `.tsx` source alone, the `.md` is written to be sufficient on its own.
 
@@ -101,14 +118,6 @@ bun run test:e2e          # playwright test — boots the real stack and drives 
 - `playwright.config.ts` (root) boots the dev stack itself via `webServer: { command: "bun run dev", ... }` — don't add manual "start the server first" steps to a spec or to CI config, the config already does it.
 - Locators: use Playwright's built-in `getByRole`/`getByLabel`/`getByText` directly for most `@gurleen-ui` components (they render plain semantic HTML — `Button` is a real `<button>`, `Input` wraps its `<input>` in a `<label>`, etc.). Only reach for `e2e/helpers/gurleen-ui.ts` for the handful of components whose DOM shape doesn't map cleanly onto a role (documented per-helper in that file — currently `Menu`, whose items are plain `<div>`s with no `role="menuitem"`, and `Slider`, a native range input that needs the native-setter trick to work with React's controlled-input tracking). Don't add a helper for a component that doesn't need one.
 - One-time setup on a fresh machine: `bunx playwright install --with-deps chromium`.
-
-## Using this as a template for a new app
-
-1. Rename the root `package.json` `"name"` (and `apps/web`/`apps/server`'s if you want app-specific names instead of the generic `web`/`server`).
-2. Replace the demo in `apps/web/src/App.tsx` and the example procedures in `apps/server/src/router.ts` with the real app — keep the wiring (the `orpc` client import, the type-only `AppRouter` import), delete the placeholder content.
-3. Update or delete `e2e/home.spec.ts` to match whatever replaces the demo page.
-4. If starting a genuinely new repository (not just a branch of this one), re-init git history; keep `vendor/gurleen-ui` as a submodule either way — re-add it with `git submodule add https://github.com/gurleen/ui.git vendor/gurleen-ui` if history was reset.
-5. Update this file and `README.md`'s intro paragraphs — everything else about the stack, the oRPC wiring, and the submodule mechanics still applies unchanged.
 
 ## Explicit don'ts
 

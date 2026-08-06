@@ -1,6 +1,6 @@
-# app-starter
+# ffdp-web
 
-A copy-and-rename template for new React apps: **Bun** runtime, **Vite** + **React 19**, **Tailwind CSS v4**, **oRPC** for type-safe client↔server calls, and **[`@gurleen-ui`](https://github.com/gurleen/ui)** as the component library.
+A personal fantasy football tracking app: **Bun** runtime, **Vite** + **React 19**, **Tailwind CSS v4**, **oRPC** for type-safe client↔server calls, **Supabase** for the database, and **[`@gurleen-ui`](https://github.com/gurleen/ui)** as the component library.
 
 > Picking this repo up as a coding agent? Read [`AGENTS.md`](./AGENTS.md) first — it's the detailed, wiring-level orientation doc. This README is the shorter human-facing quickstart.
 
@@ -12,6 +12,7 @@ A copy-and-rename template for new React apps: **Bun** runtime, **Vite** + **Rea
 | Frontend | [Vite](https://vite.dev) + React 19 |
 | Styling | [Tailwind CSS v4](https://tailwindcss.com) |
 | Client↔server | [oRPC](https://orpc.dev) |
+| Database | [Supabase](https://supabase.com) (`apps/server` only) |
 | Components | [`@gurleen-ui`](https://github.com/gurleen/ui) (vendored as a git submodule) |
 | Lint/format | [Biome](https://biomejs.dev) |
 | E2E tests | [Playwright](https://playwright.dev) |
@@ -19,13 +20,15 @@ A copy-and-rename template for new React apps: **Bun** runtime, **Vite** + **Rea
 ## Quickstart
 
 ```sh
-git clone --recurse-submodules <this-repo-url>
-cd app-starter
+git clone --recurse-submodules https://github.com/gurleen/ffdp-web.git
+cd ffdp-web
 # if you cloned without --recurse-submodules:
 git submodule update --init --recursive
 
 bun install                                    # also builds the @gurleen-ui packages (postinstall)
 bunx playwright install --with-deps chromium     # one-time, only needed for `bun run test:e2e`
+
+cp apps/server/.env.example apps/server/.env      # Supabase project URL + anon key
 
 bun run dev                                       # web: http://localhost:5173, server: http://localhost:3001
 ```
@@ -41,14 +44,6 @@ vendor/
   gurleen-ui/  @gurleen-ui, as a git submodule
 ```
 
-## Using this as a template
-
-This repo is meant to be copied for each new app, not extended in place:
-
-1. Rename the root `package.json`'s `"name"` (and `apps/web`/`apps/server`'s, if you want).
-2. Replace the demo page (`apps/web/src/App.tsx`) and example router (`apps/server/src/router.ts`) with your real app — keep the oRPC wiring (the `orpc` client, the type-only `AppRouter` import), delete the placeholder content.
-3. Update `e2e/home.spec.ts` to match.
-
 ## oRPC: how the client↔server wiring works
 
 - `apps/server/src/router.ts` defines a `router` object of procedures (built with `os` from `@orpc/server`, optionally validated with `zod`), and exports its type as `AppRouter`.
@@ -57,6 +52,10 @@ This repo is meant to be copied for each new app, not extended in place:
 - In dev, `apps/web/vite.config.ts` proxies `/rpc` to the server so there's no CORS to configure.
 
 **To add a procedure:** add it to `router` in `apps/server/src/router.ts`, then call `orpc.<name>(...)` from `apps/web` — it's typed automatically.
+
+## Supabase
+
+`apps/server` talks to the `fantasy-football` Supabase project via `apps/server/src/lib/supabase.ts`, typed with `apps/server/src/lib/database.types.ts`. `apps/web` never talks to Supabase directly — it goes through oRPC, same as everything else. All tables live in the `core` schema, not `public` — see `AGENTS.md`'s Supabase section for env vars, the `core` type-generation gotcha, and how to regenerate types after a schema change.
 
 ## `@gurleen-ui`: why a submodule
 
