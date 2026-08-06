@@ -1,15 +1,16 @@
 // Generated from the `fantasy-football` Supabase project (id: arpawvszlvhynkepusia).
 //
 // NOTE ON THE `core` SCHEMA: all of this project's tables live in `core`, not
-// `public`. The Supabase MCP `generate_typescript_types` tool (and PostgREST
-// itself) only walks schemas listed under Project Settings -> Data API ->
-// Exposed schemas, which is `public` only right now — so the MCP generator
-// emits an empty `public` schema and silently omits `core`. The `core` types
-// below were hand-authored from `list_tables(schemas: ["core"], verbose: true)`
-// introspection output instead. Once `core` is added to the exposed-schemas
-// list in the dashboard (required anyway for supabase-js to query it), rerun
-// `generate_typescript_types` and replace this whole file with its output —
-// prefer the generator's version over this one when they diverge.
+// `public`. `core` is exposed via Project Settings -> Data API -> Exposed
+// schemas (confirmed working for supabase-js queries), but the Supabase MCP
+// `generate_typescript_types` tool always emits only `public` regardless —
+// it doesn't expose the `included_schemas` param its own Management API
+// endpoint supports, so there's no way to ask it for `core` via MCP. The
+// `core` types below were hand-authored instead, from
+// `list_tables(schemas: ["core"], verbose: true)` introspection output.
+// If Supabase CLI access is ever available, prefer its output:
+// `supabase gen types typescript --project-id arpawvszlvhynkepusia --schema core`
+// — replace this whole file with that instead of hand-editing.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
