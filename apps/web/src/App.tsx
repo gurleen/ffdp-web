@@ -20,10 +20,8 @@ export function App() {
   return (
     <div className="min-h-screen bg-neutral-950 p-8 text-neutral-100">
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-xl font-semibold">app-starter</h1>
-        <p className="text-sm text-neutral-400">
-          Bun · Vite · React · Tailwind CSS · oRPC · @gurleen-ui/core
-        </p>
+        <h1 className="text-xl font-semibold">ffdp-web</h1>
+        <p className="text-sm text-neutral-400">Fantasy football tracker</p>
 
         <Panel title="oRPC demo" meta="apps/server">
           <div className="flex flex-col gap-3">
