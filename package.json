@@ -1,8 +1,8 @@
 {
-  "name": "app-starter",
+  "name": "ffdp-web",
   "version": "0.1.0",
   "private": true,
-  "description": "React + Bun + Tailwind CSS + oRPC app template, with @gurleen-ui as a git submodule.",
+  "description": "Personal fantasy football tracking app: React + Bun + Tailwind CSS + oRPC + Supabase, with @gurleen-ui as a git submodule.",
   "license": "MIT",
   "workspaces": [
     "apps/*",
