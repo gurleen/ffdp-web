@@ -81,6 +81,11 @@ typings/
 .env
 .env.test
 
+# Wrangler (Cloudflare) local state and secrets override
+.wrangler
+.dev.vars
+.dev.vars.*
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 

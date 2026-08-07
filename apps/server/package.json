@@ -8,15 +8,17 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "build": "echo 'server ships as source; nothing to build'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:worker": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@orpc/server": "^1.14.14",
-    "@supabase/supabase-js": "^2.112.2",
-    "zod": "^4.4.3"
+    "@supabase/supabase-js": "^2.112.2"
   },
   "devDependencies": {
     "@types/bun": "^1.3.11",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "wrangler": "^4.119.0"
   }
 }

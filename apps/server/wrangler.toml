@@ -1,0 +1,15 @@
+name = "ffdp-web-server"
+main = "src/worker.ts"
+compatibility_date = "2026-08-07"
+# Required for `process.env` (used by apps/server/src/lib/supabase.ts) to be
+# populated from [vars]/secrets below — see AGENTS.md's Cloudflare section.
+compatibility_flags = ["nodejs_compat"]
+
+# SUPABASE_URL and SUPABASE_ANON_KEY are not secrets (the anon key is meant to
+# be exposed, gated by Row Level Security rather than secrecy — see
+# apps/server/.env.example), so they're committed here directly rather than
+# set via `wrangler secret put`. Update both if this ever points at a
+# different Supabase project.
+[vars]
+SUPABASE_URL = "https://arpawvszlvhynkepusia.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFycGF3dnN6bHZoeW5rZXB1c2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMjQwMDAsImV4cCI6MjEwMTYwMDAwMH0.pLFGUS5skczFRYM02W2VOfMb3I3NddoVMFciBZVXiH0"

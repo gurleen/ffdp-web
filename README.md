@@ -16,6 +16,7 @@ A personal fantasy football tracking app: **Bun** runtime, **Vite** + **React 19
 | Components | [`@gurleen-ui`](https://github.com/gurleen/ui) (vendored as a git submodule) |
 | Lint/format | [Biome](https://biomejs.dev) |
 | E2E tests | [Playwright](https://playwright.dev) |
+| Deployment | [Cloudflare Pages](https://pages.cloudflare.com) (`apps/web`) + [Workers](https://workers.cloudflare.com) (`apps/server`) |
 
 ## Quickstart
 
@@ -56,6 +57,10 @@ vendor/
 ## Supabase
 
 `apps/server` talks to the `fantasy-football` Supabase project via `apps/server/src/lib/supabase.ts`, typed with `apps/server/src/lib/database.types.ts`. `apps/web` never talks to Supabase directly — it goes through oRPC, same as everything else. All tables live in the `core` schema, not `public` — see `AGENTS.md`'s Supabase section for env vars, the `core` type-generation gotcha, and how to regenerate types after a schema change.
+
+## Deploying to Cloudflare
+
+`apps/web` deploys to **Cloudflare Pages** (`bun run deploy` from `apps/web`, or connect the repo for git-triggered builds — build command `bun run build`, output `dist`). `apps/server` deploys to **Cloudflare Workers** via `apps/server/src/worker.ts` (`bun run deploy` from `apps/server`; test locally first with `bun run dev:worker`). They're separate origins in production, unlike local dev's same-origin Vite proxy — see `AGENTS.md`'s Cloudflare section for the CORS and `VITE_SERVER_URL` wiring that makes that work, and what env vars need setting where.
 
 ## `@gurleen-ui`: why a submodule
 
